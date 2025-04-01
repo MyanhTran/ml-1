@@ -5,6 +5,8 @@ from torchvision import datasets
 import torchvision.transforms as transforms
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
+import matplotlib.pyplot as plt
+
 
 class main(object):
     def __init__(self, **kwargs): 
@@ -37,7 +39,12 @@ class main(object):
 
         classed = ['bird', 'cat', 'deer', 'dog']
 
+    def show_img(img):
+        #we normalize image to tensor (C x H x W), now we need to convert it back (H W C)
     
+        img = img *0.5 + 0.5
+        img = np.transpose(img, (1,2,0))
+        pass
         
 
     def train(self):
