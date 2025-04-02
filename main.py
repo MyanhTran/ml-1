@@ -7,12 +7,13 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import Subset, DataLoader
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
+from torchvision.models import resnet50
 
 
 class main(object):
     def __init__(self, **kwargs): 
         #use **kwargs: to capture any keyword arguments (key, values) pairs not explitly defined in its parameter list
-        self.batchsize = kwargs.pop("batch_size", 16)
+        self.batchsize = kwargs.pop("batch_size", 36)
         # step2: load the data
         # download, pre-processing + data augentament, split, create data loader
          
@@ -57,10 +58,11 @@ class main(object):
         plt.show()
 
     def train(self):
-        pass
+        model = resnet50()
+        print(model)
 
     def evaluate(self, epoch):
         pass
 
 main_object = main()
-main_object.show_batch_img()
+main_object.train()
