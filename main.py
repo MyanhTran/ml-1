@@ -8,12 +8,16 @@ from torch.utils.data import Subset, DataLoader
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 from torchvision.models import resnet50
-
+import torch.nn as nn 
 
 class main(object):
     def __init__(self, **kwargs): 
         #use **kwargs: to capture any keyword arguments (key, values) pairs not explitly defined in its parameter list
         self.batchsize = kwargs.pop("batch_size", 36)
+        self.lr = kwargs.pop("learning_rate", 0.01)
+        self.beta = kwargs.pop("beta", 0.999)
+        self.epochs = kwargs.pop("epochs", 10)
+
         # step2: load the data
         # download, pre-processing + data augentament, split, create data loader
          
@@ -37,6 +41,13 @@ class main(object):
         self.train_loader = DataLoader(train, batch_size=self.batchsize, shuffle = True)
         self.val_loader = DataLoader(val, batch_size=self.batchsize, shuffle=False)
         self.test_loader = DataLoader(test, batch_size=self.batchsize, shuffle=False)
+
+        #initialize loss function 
+        self.model = resnet50()
+        self.criterion = nn.CrossEntropyLoss()
+        self.optimizer = torch.optim.Adam(params= self.model.parameters(),
+                                          lr=self.lr,
+                                          betas=self.beta)
 
     def show_batch_img(self):
         #get batch image from 1 single interation of data loader
@@ -66,4 +77,3 @@ class main(object):
 
 main_object = main()
 main_object.train()
-#test
