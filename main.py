@@ -88,6 +88,8 @@ class main(object):
                 #5 update parameters
                 self.optimizer.step() #update the paramter for each epoch
                 #6 track loss and accuracy 
+                import pdb
+                pdb.set_trace()
                 self.train_loss += loss.item() #item() extract scalar from tensor
                 _, predicted = output.max(1)
                 correct += predicted.eq(target).sum().item()
