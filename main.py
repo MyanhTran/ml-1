@@ -10,6 +10,24 @@ import matplotlib.pyplot as plt
 from torchvision.models import resnet50
 import torch.nn as nn 
 import time
+from models import VanillaModel
+
+class Avg_helper(object):
+    "helper function to compute average time in encapsulated manner"
+    def __init__(self):
+        self.reset()
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+    def update(self, val, n=1):
+        self.val = val
+        self.count += n
+        self.sum = val * n 
+        self.avg = self.sum / self.count
+
+
 
 class main(object):
     def __init__(self, **kwargs): 
@@ -18,6 +36,7 @@ class main(object):
         self.lr = kwargs.pop("learning_rate", 0.01)
         self.beta = kwargs.pop("beta", 0.999)
         self.epochs = kwargs.pop("epochs", 1)
+        self.model_type = kwargs.pop('model', 'VanillaModel')
 
         # step2: load the data
         # download, pre-processing + data augentament, split, create data loader
@@ -48,6 +67,10 @@ class main(object):
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(params= self.model.parameters(),
                                           lr=self.lr)
+        
+        #select model 
+        if self.model_type == 'VanillaModel':
+            self.model = VanillaModel()
 
     def show_batch_img(self):
         #get batch image from 1 single interation of data loader
@@ -68,7 +91,7 @@ class main(object):
             ax.axis('off')
         plt.show()
 
-    def train(self):
+    # def train(self):
         
         #1 loop over mini batches 
         for epoch in range(self.epochs):
@@ -99,9 +122,49 @@ class main(object):
 
         print(start, self.train_loss, train_acc)
         
+    del train(self):
+        for epoch in range(self.epochs):
+            #train loop
+            self.train_step(epoch)
+            #eval loop
+
+            
+        pass
+
+    def train_step(self, epoch):
+        iter_time = Avg_helper()
+        losses = Avg_helper()
+        acc = Avg_helper()
+        
+        self.model.train()
+
+        for index, (data, target) in enumerate(self.train_loader):
+            start = time.time()
+            
+            #body of the training loop
+            #forward pass
+            output = self.model(data)
+            loss = self.criterion(output, target)
+            #zero_grad() set grad to None for memory efficiency and advoid accumualting grad from prev batch
+            self.optimizer.zero_grad()
+
+            #backward pass
+            loss.backward()
+            self.optimizer.step()
+
+            #get accuracy 
+
+    def _get_accuracy(self, ouput, target):
+        batch_size = target.shape[0]
+        #get the max prob of the tensor, with
+        _, prediction = torch.max(ouput, dim=-1)
+        #.eq() compare predictions and target 
+        correct = prediction.eq(target).sum() * 1.0
+        return correct / batch_size
 
     def evaluate(self, epoch):
         pass
+
 
 main_object = main()
 main_object.train()
