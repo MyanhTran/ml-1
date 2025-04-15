@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from torchvision.models import resnet50
 import torch.nn as nn 
 import time
-from models import VanillaModel
+from models.VanillaModel import VanillaModel
 
 class Avg_helper(object):
     "helper function to compute average time in encapsulated manner"
@@ -71,6 +71,7 @@ class main(object):
         #select model 
         if self.model_type == 'VanillaModel':
             self.model = VanillaModel()
+            print(type(VanillaModel))
 
     def show_batch_img(self):
         #get batch image from 1 single interation of data loader
@@ -90,58 +91,26 @@ class main(object):
             ax.set_title(f"label: {label.item()}")
             ax.axis('off')
         plt.show()
-
-    # def train(self):
         
-        #1 loop over mini batches 
-        for epoch in range(self.epochs):
-            #2 set up for training 
-            self.train_loss = 0.0
-            self.val_loss = 0.0
-            correct = 0
-            self.model.train()
-            for idx, (data, target) in enumerate(self.train_loader):
-                start = time.time()
-                self.optimizer.zero_grad() #reset gradients
-                #3 forward pass
-                output = self.model(data)
-                loss = self.criterion(output, target)
-                #4 backward pass: compute gradient
-                loss.backward()
-                #5 update parameters
-                self.optimizer.step() #update the paramter for each epoch
-                #6 track loss and accuracy 
-                import pdb
-                pdb.set_trace()
-                self.train_loss += loss.item() #item() extract scalar from tensor
-                _, predicted = output.max(1)
-                correct += predicted.eq(target).sum().item()
-
-        self.train_loss = self.train_loss / len(self.train_loader.dataset)
-        train_acc = (correct / len(self.train_loader.dataset)) * 100 
-
-        print(start, self.train_loss, train_acc)
-        
-    del train(self):
+    def train(self):
         for epoch in range(self.epochs):
             #train loop
             self.train_step(epoch)
             #eval loop
-
-            
+            self._evaluate(epoch)
         pass
 
     def train_step(self, epoch):
         iter_time = Avg_helper()
-        losses = Avg_helper()
-        acc = Avg_helper()
+        loss_helper = Avg_helper()
+        acc_helper = Avg_helper()
         
         self.model.train()
-
+        
+        #run batches 
         for index, (data, target) in enumerate(self.train_loader):
             start = time.time()
-            
-            #body of the training loop
+
             #forward pass
             output = self.model(data)
             loss = self.criterion(output, target)
@@ -151,8 +120,31 @@ class main(object):
             #backward pass
             loss.backward()
             self.optimizer.step()
-
+            
             #get accuracy 
+            batch_acc = self._get_accuracy(output, target)
+            batch_size = output.shape[0]
+            #update loss and acc into the accumulating loss, acc of epoch
+            loss_helper.update(loss.item(), batch_size)
+            acc_helper.update(batch_acc, batch_size)
+            iter_time.update(time.time() - start)
+
+            batch_number = len(self.train_loader)
+            if index%10 == 0:
+                print(
+                    (
+                        "epoch: {0},{1}/{2} \t"
+                        "time: {iter_time.val:.2f} {iter_time.avg:.2f} \t"
+                        "loss: {loss.val:2f} {loss.avg:.2f} \t"
+                        "acc: {acc.val:.2f} {acc.avg:.2f} \t"
+                    ).format(
+                        epoch, index, batch_number,
+                        iter_time=iter_time, 
+                        loss=loss_helper,
+                        acc=acc_helper
+                    )
+                )
+
 
     def _get_accuracy(self, ouput, target):
         batch_size = target.shape[0]
@@ -162,8 +154,43 @@ class main(object):
         correct = prediction.eq(target).sum() * 1.0
         return correct / batch_size
 
-    def evaluate(self, epoch):
-        pass
+    def _evaluate(self, epoch):
+        iter_time = Avg_helper()
+        loss_helper = Avg_helper()
+        acc_helper = Avg_helper()
+        
+        self.model.eval()
+        for index, (data, target) in enumerate(self.val_loader):
+            start = time.time()
+
+            with torch.no_grad():
+                output = self.model(data)
+                loss = self.criterion(output, target)
+
+            batch_acc = self._get_accuracy(output, target)
+            batch_size = output.shape[0]
+            batch_number = len(self.val_loader)
+
+            loss_helper.update(loss.item(), batch_size)
+            acc_helper.update(batch_acc, batch_size)
+
+            iter_time = time.time() - start
+            if index%10:
+                print(
+                    (
+                        'epoch: {0}, {1}/{2} \t'
+                        'time: {iter_time.val:.2g} {iter_time.avg:.2f} \t'
+                        'loss: {loss.val:.2f} ]f'
+                        'acc: {acc.val:.2f}'
+                    ).format(
+                        epoch, index, batch_number,
+                        iter_time = iter_time,
+                        loss=loss_helper,
+                        acc=acc_helper
+                    )
+                )
+        return acc.avg
+
 
 
 main_object = main()
