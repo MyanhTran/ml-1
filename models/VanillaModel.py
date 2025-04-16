@@ -17,6 +17,7 @@ class VanillaModel(nn.Module):
         self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
         #output shape: 125//2: (20,62,62)
         self.fc = nn.Linear(20*62*62, 102)
+        test
 
     def forward(self, x):
         x = nn.functional.relu(self.convu1(x))
